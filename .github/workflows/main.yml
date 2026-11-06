@@ -8,7 +8,6 @@ permissions:
   contents: write
   
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -62,7 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-win-x64.zip
-          tag_name: binaries
+          tag_name: Shaderc
           fail_on_unmatched_files: true
   linux:
     strategy:
@@ -106,7 +105,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-linux-x64.zip
-          tag_name: binaries
+          tag_name: Shaderc
           fail_on_unmatched_files: true
   osx:
     strategy:
@@ -149,14 +148,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-osx-x64.zip
-          tag_name: binaries
+          tag_name: Shaderc
           fail_on_unmatched_files: true
   android:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { platform: arm },
+          { platform: arm32 },
           { platform: arm64 },
         ]
     name: android-${{ matrix.platform }}
@@ -201,12 +200,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-android-${{ matrix.platform }}
-          path: ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease
+          path: ./bgfx/.build/android-${{ matrix.platform }}/bin/shaderc
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease
+        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-android-${{ matrix.platform }}.zip
-          tag_name: binaries
+          tag_name: Shaderc
           fail_on_unmatched_files: true
