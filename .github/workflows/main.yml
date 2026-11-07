@@ -65,75 +65,75 @@ jobs:
 #           fail_on_unmatched_files: true
 
 
-linux:
-  name: linux-x64
-  runs-on: ubuntu-22.04
+  linux:
+    name: linux-x64
+    runs-on: ubuntu-22.04
 
-  steps:
-    - name: Restore shaderc cache
-      id: shaderc-cache
-      uses: actions/cache@v4
-      with:
-        path: bgfx/.build/linux64_gcc/bin/shadercRelease
-        key: shaderc-linux-x64-${{ hashFiles('bgfx-revision.txt', 'bx-revision.txt', 'bimg-revision.txt') }}-release-v1
+    steps:
+      - name: Restore shaderc cache
+        id: shaderc-cache
+        uses: actions/cache@v4
+        with:
+          path: bgfx/.build/linux64_gcc/bin/shadercRelease
+          key: shaderc-linux-x64-${{ hashFiles('bgfx-revision.txt', 'bx-revision.txt', 'bimg-revision.txt') }}-release-v1
 
-    - name: Checkout bgfx
-      if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        path: bgfx
+      - name: Checkout bgfx
+        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          path: bgfx
 
-    - name: Checkout bx
-      if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: bkaradzic/bx
-        ref: 198cd12
-        path: bx
+      - name: Checkout bx
+        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bx
+          ref: 198cd12
+          path: bx
 
-    - name: Checkout bimg
-      if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: bkaradzic/bimg
-        path: bimg
+      - name: Checkout bimg
+        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
 
-    - name: Cache ccache
-      if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v4
-      with:
-        path: ~/.ccache
-        key: ccache-linux-x64-v1
-        restore-keys: ccache-linux-x64-
+      - name: Cache ccache
+        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-linux-x64-v1
+          restore-keys: ccache-linux-x64-
 
-    - name: Build shaderc
-      if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      env:
-        CC: ccache gcc
-        CXX: ccache g++
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libgl-dev ccache mold
+      - name: Build shaderc
+        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+        env:
+          CC: ccache gcc
+          CXX: ccache g++
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev ccache mold
 
-        cd bgfx
+          cd bgfx
 
-        make -j"$(nproc)" shaderc config=release \
-          CXXFLAGS="-O3 -march=x86-64-v2 -flto=auto -fdata-sections -ffunction-sections -fvisibility=hidden" \
-          LDFLAGS="-fuse-ld=mold -flto=auto -Wl,--gc-sections -Wl,--as-needed -s"
+          make -j"$(nproc)" shaderc config=release \
+            CXXFLAGS="-O3 -march=x86-64-v2 -flto=auto -fdata-sections -ffunction-sections -fvisibility=hidden" \
+            LDFLAGS="-fuse-ld=mold -flto=auto -Wl,--gc-sections -Wl,--as-needed -s"
 
-    - name: Publish binary
-      run: |
-        mkdir -p dist
-        cp bgfx/.build/linux64_gcc/bin/shadercRelease dist/shaderc
-        cd dist
-        python3 -m zipfile -c ../shaderc-linux-x64.zip shaderc
+      - name: Publish binary
+        run: |
+          mkdir -p dist
+          cp bgfx/.build/linux64_gcc/bin/shadercRelease dist/shaderc
+          cd dist
+          python3 -m zipfile -c ../shaderc-linux-x64.zip shaderc
 
-    - name: Upload release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: shaderc-linux-x64.zip
-        tag_name: Shaderc
-        fail_on_unmatched_files: true
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: shaderc-linux-x64.zip
+          tag_name: Shaderc
+          fail_on_unmatched_files: true
 
 
   osx:
