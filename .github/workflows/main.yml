@@ -6,7 +6,7 @@ concurrency:
 
 permissions:
   contents: write
-  
+
 on:
   workflow_dispatch:
 
@@ -15,10 +15,10 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include: [
-          { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
-#         { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
-        ]
+        include:
+          - msystem: MINGW64
+            project: mingw-gcc
+            bindir: win64_mingw-gcc
     name: windows-x64
     runs-on: windows-latest
     steps:
@@ -56,7 +56,8 @@ jobs:
           name: shaderc-win-x64.exe
           path: ./bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe
       - name: Zip binary
-        run: Compress-Archive -Path ./bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe -Destination shaderc-win-x64.zip
+        shell: pwsh
+        run: Compress-Archive -Path ./bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe -DestinationPath shaderc-win-x64.zip
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
@@ -64,13 +65,13 @@ jobs:
           tag_name: Shaderc
           fail_on_unmatched_files: true
 
- linux:
+  linux:
     strategy:
       fail-fast: true
       matrix:
-        include: [
-          { config: release, binsuffix: Release },
-        ]
+        include:
+          - config: release
+            binsuffix: Release
     name: linux-x64
     runs-on: ubuntu-22.04
     steps:
@@ -92,7 +93,8 @@ jobs:
           path: bimg
       - name: Build
         run: |
-          sudo apt install libgl-dev
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev
           cd bgfx
           make -j$(nproc) shaderc
       - name: Upload artifacts
@@ -113,9 +115,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include: [
-          { config: release, binsuffix: Release },
-        ]
+        include:
+          - config: release
+            binsuffix: Release
     name: macos-x64
     runs-on: macos-latest
     steps:
@@ -157,10 +159,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include: [
-          { platform: arm, label: arm32 },
-          { platform: arm64, label: arm64 },
-        ]
+        include:
+          - platform: arm
+            label: arm32
+          - platform: arm64
+            label: arm64
     name: android-${{ matrix.label }}
     runs-on: ubuntu-22.04
     steps:
@@ -187,12 +190,11 @@ jobs:
           path: bimg
       - name: Build
         run: |
-          sudo apt install libgl-dev
-          ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
-          ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev
           cd bgfx
           make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
+          make -j$(nproc) -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
             CXXFLAGS="-O3 -ffunction-sections -fdata-sections" \
             LDFLAGS="-Wl,--gc-sections -s"
         env:
@@ -200,7 +202,7 @@ jobs:
       - name: Check
         run: |
           cd bgfx
-          ls -lash ".build/android-${{ matrix.platform }}/bin"
+          ls -lah ".build/android-${{ matrix.platform }}/bin"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
