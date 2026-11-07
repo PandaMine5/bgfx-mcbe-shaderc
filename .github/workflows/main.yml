@@ -91,12 +91,12 @@ jobs:
           ref: 198cd120e4941d8aeb677db945ef4291a1ced291
           path: bx
 
-      - name: Checkout bimg
-        if: steps.shaderc-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bimg
-          path: bimg
+      # - name: Checkout bimg
+      #   if: steps.shaderc-cache.outputs.cache-hit != 'true'
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: bkaradzic/bimg
+      #     path: bimg
 
       - name: Cache ccache
         if: steps.shaderc-cache.outputs.cache-hit != 'true'
@@ -222,9 +222,7 @@ jobs:
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
           cd bgfx
           make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
-            CXXFLAGS="-O3 -ffunction-sections -fdata-sections" \
-            LDFLAGS="-Wl,--gc-sections -s"
+          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release 
         env:
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Check
