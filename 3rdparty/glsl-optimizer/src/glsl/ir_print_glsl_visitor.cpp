@@ -30,6 +30,10 @@
 #include "program/hash_table.h"
 #include <math.h>
 #include <limits>
+#include <string>
+#include <sstream>
+#include <algorithm>
+
 
 
 static void print_type(string_buffer& buffer, const glsl_type *t, bool arraySize);
@@ -294,11 +298,85 @@ _mesa_print_ir_glsl(exec_list *instructions,
 #if 0 // BK - disable LOD workarounds.
 	print_texlod_workarounds(uses_texlod_impl, uses_texlodproj_impl, str);
 #endif // 0
+
 	
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
+	std::string minified = minifyGLSL(std::string(str.c_str()));
+	
+	return ralloc_strdup(buffer, minified.c_str());
+}
 
-	return ralloc_strdup(buffer, str.c_str());
+
+static std::string minifyGLSL(const std::string& source)
+{
+    // Put #version, #extension above all code
+    static const std::regex regex_directive_ontop(R"(([^\n])#)"); 
+	
+
+    // Remove comments
+    static const std::regex regex_remove_comments(R"(/\*[\s\S]*?\*/|//[^\r\n]*)");
+    
+    // Remove whitespaces inside functions and operators
+    static const std::regex regex_remove_whitespaces(R"(\s*([(){}<>=+\-*/|&?:;,])\s*)");
+    // Remove whitespaces
+    static const std::regex regex_remove_trailing_whitespaces(R"([ \t]+(?=[\r\n]|$))");
+    static const std::regex regex_remove_leading_whitespaces(R"((^|\n)\s+(?=\S))");
+
+
+    // Remove front demical 0.1 -> .1
+	  static const std::regex regex_remove_leading_zero(R"((^|[^\w.])0(\.\d))");
+    // Remove trailing zeros 1.20000 -> 1.2
+    static const std::regex regex_remove_trailing_zero(R"((\.\d*[1-9])0+(?!\d))");
+	
+
+    // Add gap between two + or -
+    // Like: (a - -b) instead (a--b)
+    static const std::regex regex_plus_minus_safety(R"(([+\-])\s+(?=[+\-]))");
+
+	
+    std::string s = source;
+
+    s = std::regex_replace(s, regex_remove_comments, "");
+    s = std::regex_replace(s, regex_remove_trailing_whitespaces, "");
+    s = std::regex_replace(s, regex_remove_leading_whitespaces, "$1");
+
+    s = std::regex_replace(s, regex_remove_leading_zero, "$1$2");
+    s = std::regex_replace(s, regex_remove_trailing_zero, "$1");
+
+    // Directive lines "#version"... are same
+    // So their line breaks survive
+    std::string out, chunk;
+    auto flushChunk = [&]() {
+        if (chunk.empty()) return;
+        chunk = std::regex_replace(chunk, regex_plus_minus_safety, "$1\x01");
+        chunk = std::regex_replace(chunk, regex_remove_whitespaces, "$1");
+        std::replace(chunk.begin(), chunk.end(), '\x01', ' ');
+        out += chunk;
+        chunk.clear();
+    };
+
+    std::istringstream lines(s);
+    std::string line;
+    while (std::getline(lines, line))
+    {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty()) continue;
+
+        if (line[0] == '#') { // Put #version, #extension above all
+            flushChunk();
+            out += line;
+            out += '\n';
+        } else {
+            chunk += line;
+            chunk += '\n';
+        }
+    }
+    flushChunk();
+
+    // Safety net for any '#' that ended up mid-line
+    out = std::regex_replace(out, regex_directive_ontop, "$1\n#");
+    return out;
 }
 
 
@@ -308,8 +386,8 @@ void ir_print_glsl_visitor::indent(void)
 		return;
 	previous_skipped = false;
 	for (int i = 0; i < indentation; i++)
-		// buffer.asprintf_append ("  ");
-		buffer.asprintf_append ("");
+		buffer.asprintf_append ("  ");
+		//buffer.asprintf_append ("");
 }
 
 void ir_print_glsl_visitor::end_statement_line()
@@ -325,8 +403,8 @@ void ir_print_glsl_visitor::newline_indent()
 	if (expression_depth % 4 == 0)
 	{
 		++indentation;
-		// buffer.asprintf_append ("\n");
-		buffer.asprintf_append ("");
+		buffer.asprintf_append ("\n");
+		//buffer.asprintf_append ("");
 		indent();
 	}
 }
@@ -335,8 +413,8 @@ void ir_print_glsl_visitor::newline_deindent()
 	if (expression_depth % 4 == 0)
 	{
 		--indentation;
-		// buffer.asprintf_append ("\n");
-		buffer.asprintf_append ("");
+		buffer.asprintf_append ("\n");
+		//buffer.asprintf_append ("");
 		indent();
 	}
 }
