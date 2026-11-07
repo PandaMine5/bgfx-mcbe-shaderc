@@ -47,11 +47,12 @@ jobs:
       - name: Build
         shell: msys2 {0}
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-ident -fno-strict-aliasing
           LINK_FLAGS: -flto -Wl,--gc-sections -static -s
         run: |
           cd bgfx
-          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX
+          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX \
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
       - name: Rename binary
         shell: msys2 {0}
         run: |
@@ -98,8 +99,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
-          LINK_FLAGS: -flto -Wl,--gc-sections -s
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-ident -fno-strict-aliasing
+          LINK_FLAGS: -flto -Wl,--gc-sections -static-libstdc++ -static-libgcc -s
         run: |
           sudo apt install libgl-dev
           cd bgfx
@@ -153,8 +154,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
-          LINK_FLAGS: -flto -Wl,-dead_strip
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-strict-aliasing -mmacosx-version-min=11.0
+          LINK_FLAGS: -flto -Wl,-dead_strip -mmacosx-version-min=11.0
         run: |
           cd bgfx
           make -j$(sysctl -n hw.physicalcpu) shaderc \
@@ -213,6 +214,10 @@ jobs:
           repository: bkaradzic/bimg
           path: bimg
       - name: Build
+        env:
+          OPT_FLAGS: -O3 -ffunction-sections -fdata-sections -fno-strict-aliasing
+          LINK_FLAGS: -Wl,--gc-sections -Wl,--icf=all
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           sudo apt install libgl-dev
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
@@ -221,10 +226,6 @@ jobs:
           make .build/projects/gmake-android-${{ matrix.platform }}
           make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
             CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
-        env:
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-          OPT_FLAGS: -O3 -ffunction-sections -fdata-sections
-          LINK_FLAGS: -Wl,--gc-sections
       - name: Check
         run: |
           cd bgfx
