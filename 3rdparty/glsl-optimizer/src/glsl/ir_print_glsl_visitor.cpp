@@ -31,6 +31,7 @@
 #include <math.h>
 #include <limits>
 #include <string>
+#include <regex>
 #include <sstream>
 #include <algorithm>
 
