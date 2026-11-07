@@ -6,144 +6,123 @@ concurrency:
 
 permissions:
   contents: write
-
+  
 on:
   workflow_dispatch:
 
 jobs:
-#   windows:
-#     strategy:
-#       fail-fast: true
-#       matrix:
-#         include: [
-          # { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
-# #         { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
-#         ]
-#     name: windows-x64
-#     runs-on: windows-latest
-#     steps:
-#       - name: Checkout bgfx
-#         uses: actions/checkout@v4
-#         with:
-#           path: bgfx
-#       - name: Checkout bx
-#         uses: actions/checkout@v4
-#         with:
-#           repository: bkaradzic/bx
-#           path: bx
-#           fetch-depth: 0
-#       - run: cd bx && git checkout 198cd12 || cd ..
-#       - name: Checkout bimg
-#         uses: actions/checkout@v4
-#         with:
-#           repository: bkaradzic/bimg
-#           path: bimg
-#       - name: Prepare
-#         uses: msys2/setup-msys2@v2
-#         with:
-#           msystem: ${{ matrix.msystem }}
-#           update: true
-#           install: make
-#           pacboy: cc:p
-#       - name: Build
-#         shell: msys2 {0}
-#         run: |
-#           cd bgfx
-#           make shaderc config=release -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX
-#       - name: Upload artifacts
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: shaderc-win-x64.exe
-#           path: ./bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe
-#       - name: Zip binary
-#         run: Compress-Archive -Path ./bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe -DestinationPath shaderc-win-x64.zip
-#       - name: Publish binary
-#         uses: softprops/action-gh-release@v2
-#         with:
-#           files: shaderc-win-x64.zip
-#           tag_name: Shaderc
-#           fail_on_unmatched_files: true
-
-
-  linux:
-    name: linux-x64
-    runs-on: ubuntu-22.04
-
+  windows-x64:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
+        ]
+    name: windows-x64
+    runs-on: windows-latest
     steps:
-      - name: Restore shaderc cache
-        id: shaderc-cache
-        uses: actions/cache@v4
-        with:
-          path: bgfx/.build/linux64_gcc/bin/shadercRelease
-          key: shaderc-linux-x64-${{ hashFiles('bgfx-revision.txt', 'bx-revision.txt', 'bimg-revision.txt') }}-release-v1
-
       - name: Checkout bgfx
-        if: steps.shaderc-cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           path: bgfx
-
       - name: Checkout bx
-        if: steps.shaderc-cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
-          ref: 198cd120e4941d8aeb677db945ef4291a1ced291
           path: bx
-
-      # - name: Checkout bimg
-      #   if: steps.shaderc-cache.outputs.cache-hit != 'true'
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: bkaradzic/bimg
-      #     path: bimg
-
-      - name: Cache ccache
-        if: steps.shaderc-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
+          fetch-depth: 0
+      - run: cd bx && git checkout 198cd12 || cd ..
+      - name: Checkout bimg
+        uses: actions/checkout@v4
         with:
-          path: ~/.ccache
-          key: ccache-linux-x64-v1
-          restore-keys: ccache-linux-x64-
-
-      - name: Build shaderc
-        if: steps.shaderc-cache.outputs.cache-hit != 'true'
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Prepare
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          install: make
+          pacboy: cc:p
+      - name: Build
+        shell: msys2 {0}
         env:
-          CC: ccache gcc
-          CXX: ccache g++
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
+          LINK_FLAGS: -flto -Wl,--gc-sections -static -s
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl-dev ccache mold
-
           cd bgfx
-
-          make -j"$(nproc)" shaderc config=release \
-            CXXFLAGS="-O3 -march=x86-64-v2 -flto=auto -fdata-sections -ffunction-sections -fvisibility=hidden" \
-            LDFLAGS="-fuse-ld=mold -flto=auto -Wl,--gc-sections -Wl,--as-needed -s"
-
-      - name: Publish binary
+          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX \
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+      - name: Rename binary
+        shell: msys2 {0}
         run: |
           mkdir -p dist
-          cp bgfx/.build/linux64_gcc/bin/shadercRelease dist/shaderc
-          cd dist
-          python3 -m zipfile -c ../shaderc-linux-x64.zip shaderc
-
-      - name: Upload release
+          cp bgfx/.build/${{ matrix.bindir }}/bin/shadercRelease.exe dist/shaderc.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shaderc-win-x64
+          path: dist/shaderc.exe
+      - name: Zip binary
+        run: Compress-Archive -Path ./dist/shaderc.exe -Destination shaderc-win-x64.zip
+      - name: Publish binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: shaderc-win-x64.zip
+          tag_name: Shaderc
+          fail_on_unmatched_files: true
+  linux:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: release, binsuffix: Release },
+        ]
+    name: linux-${{ matrix.config }}64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v4
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bx
+          path: bx
+          fetch-depth: 0
+      - run: cd bx && git checkout 198cd12 || cd ..
+      - name: Checkout bimg
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Build
+        run: |
+          sudo apt install libgl-dev
+          cd bgfx
+          make -j$(nproc) shaderc
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shaderc-linux-x64
+          path: ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+      - name: Zip binary
+        run: zip -j shaderc-linux-x64.zip ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+      - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-linux-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
-
-
   osx:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { config: release },
+          { config: release, binsuffix: Release },
         ]
-    name: macos-x64
+    name: osx-x64-${{ matrix.config }}
     runs-on: macos-latest
     steps:
       - name: Checkout bgfx
@@ -165,38 +144,35 @@ jobs:
       - name: Build
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) shaderc config=${{ matrix.config }}
+          make -j$(sysctl -n hw.physicalcpu) shaderc
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shaderc-macos-x64
-          path: ./bgfx/.build/macos-x64/bin/shadercRelease
+          name: shaderc-osx-x64
+          path: ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
       - name: Zip binary
-        run: zip -j shaderc-macos-x64.zip ./bgfx/.build/macos-x64/bin/shadercRelease
+        run: zip -j shaderc-osx-x64.zip ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
-          files: shaderc-macos-x64.zip
+          files: shaderc-osx-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
-
   android:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { platform: arm, label: arm32 },
-          { platform: arm64, label: arm64 },
+          { platform: arm },
+          { platform: arm64 },
         ]
-    name: android-${{ matrix.label }}
+    name: android-${{ matrix.platform }}
     runs-on: ubuntu-22.04
-    env:
-      NDK_VERSION: r25c
     steps:
       - uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
-          ndk-version: ${{ env.NDK_VERSION }}
+          ndk-version: r25c
           add-to-path: false
       - name: Checkout bgfx
         uses: actions/checkout@v4
@@ -214,41 +190,27 @@ jobs:
         with:
           repository: bkaradzic/bimg
           path: bimg
-          fetch-depth: 0
       - name: Build
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl-dev zip
+          sudo apt install libgl-dev
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
-          
           cd bgfx
-
           make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
-            CXXFLAGS="-O3 -flto=thin -fdata-sections -ffunction-sections -fvisibility=hidden" \
-            LDFLAGS="-flto=thin -Wl,--gc-sections -Wl,--as-needed -s"
+          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release
         env:
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Check
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
-      - name: Prepare binary
-        run: |
-          mkdir -p out
-          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease out/shaderc
-          chmod +x out/shaderc
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-android-${{ matrix.platform }}
-          path: out/shaderc
-
+          path: ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.platform }}.zip out/shaderc
-
+        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
