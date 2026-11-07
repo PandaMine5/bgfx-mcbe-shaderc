@@ -51,8 +51,7 @@ jobs:
           LINK_FLAGS: -flto -Wl,--gc-sections -static -s
         run: |
           cd bgfx
-          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX \
-            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX
       - name: Rename binary
         shell: msys2 {0}
         run: |
