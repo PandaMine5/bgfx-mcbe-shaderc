@@ -71,7 +71,7 @@ jobs:
         include: [
           { config: release, binsuffix: Release },
         ]
-    name: linux-x64
+    name: linux-x64 ${{ }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -224,13 +224,13 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shaderc-android-${{ matrix.label }}
+          name: shaderc-android-${{ matrix.platform }}
           path: ./bgfx/.build/android-${{ matrix.platform }}/bin/shaderc
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.label }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shaderc
+        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
-          files: shaderc-android-${{ matrix.label }}.zip
+          files: shaderc-android-${{ matrix.platform }}.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
