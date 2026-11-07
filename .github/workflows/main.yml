@@ -209,11 +209,12 @@ jobs:
           path: bx
           fetch-depth: 0
       - run: cd bx && git checkout 198cd12 || cd ..
-      # - name: Checkout bimg
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: bkaradzic/bimg
-      #     path: bimg
+      - name: Checkout bimg
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+          fetch-depth: 0
       - name: Build
         run: |
           sudo apt-get update
