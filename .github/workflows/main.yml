@@ -71,7 +71,7 @@ jobs:
         include: [
           { config: release },
         ]
-    name: linux-x64 ${{ }}
+    name: linux-x64
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -115,7 +115,7 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: release, binsuffix: Release },
+          { config: release },
         ]
     name: macos-x64
     runs-on: macos-latest
