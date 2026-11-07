@@ -69,9 +69,9 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: release, binsuffix: Release, arch: x64 },
+          { config: release },
         ]
-    name: linux-${{ matrix.arch }}
+    name: linux-x64 ${{ }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -100,9 +100,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-linux-x64
-          path: ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+          path: ./bgfx/.build/linux64_gcc/bin/shaderc
       - name: Zip binary
-        run: zip -j shaderc-linux-x64.zip ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+        run: zip -j shaderc-linux-x64.zip ./bgfx/.build/linux64_gcc/bin/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
@@ -110,49 +110,49 @@ jobs:
           tag_name: Shaderc
           fail_on_unmatched_files: true
 
-#   osx:
-#     strategy:
-#       fail-fast: true
-#       matrix:
-#         include: [
-#           { config: release, binsuffix: Release },
-#         ]
-#     name: macos-x64
-#     runs-on: macos-latest
-#     steps:
-#       - name: Checkout bgfx
-#         uses: actions/checkout@v4
-#         with:
-#           path: bgfx
-#       - name: Checkout bx
-#         uses: actions/checkout@v4
-#         with:
-#           repository: bkaradzic/bx
-#           path: bx
-#           fetch-depth: 0
-#       - run: cd bx && git checkout 198cd12 || cd ..
-#       - name: Checkout bimg
-#         uses: actions/checkout@v4
-#         with:
-#           repository: bkaradzic/bimg
-#           path: bimg
-#       - name: Build
-#         run: |
-#           cd bgfx
-#           make -j$(sysctl -n hw.physicalcpu) shaderc config=${{ matrix.config }}
-#       - name: Upload artifacts
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: shaderc-osx-x64
-#           path: ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
-#       - name: Zip binary
-#         run: zip -j shaderc-osx-x64.zip ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
-#       - name: Publish binary
-#         uses: softprops/action-gh-release@v2
-#         with:
-#           files: shaderc-osx-x64.zip
-#           tag_name: Shaderc
-#           fail_on_unmatched_files: true
+  osx:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: release, binsuffix: Release },
+        ]
+    name: macos-x64
+    runs-on: macos-latest
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v4
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bx
+          path: bx
+          fetch-depth: 0
+      - run: cd bx && git checkout 198cd12 || cd ..
+      - name: Checkout bimg
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Build
+        run: |
+          cd bgfx
+          make -j$(sysctl -n hw.physicalcpu) shaderc config=${{ matrix.config }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shaderc-macos-x64
+          path: ./bgfx/.build/macos-x64/bin/shaderc
+      - name: Zip binary
+        run: zip -j shaderc-macos-x64.zip ./bgfx/.build/macos-x64/bin/shaderc
+      - name: Publish binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: shaderc-macos-x64.zip
+          tag_name: Shaderc
+          fail_on_unmatched_files: true
 
   android:
     strategy:
@@ -188,22 +188,6 @@ jobs:
         with:
           repository: bkaradzic/bimg
           path: bimg
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-libgl-dev-zip-v1
-
-      - name: Cache build output
-        uses: actions/cache@v4
-        with:
-          path: |
-            bgfx/.build
-          key: build-${{ runner.os }}-${{ matrix.platform }}-${{ env.NDK_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            build-${{ runner.os }}-${{ matrix.platform }}-${{ env.NDK_VERSION }}-
-
       - name: Build
         run: |
           sudo apt-get update
@@ -221,6 +205,8 @@ jobs:
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
+          cp ".build/android-${{ matrix.platform }}/bin/shadercRelease" \
+             ".build/android-${{ matrix.platform }}/bin/shaderc"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
