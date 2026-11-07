@@ -16,9 +16,9 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
+          { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc', arch: 'x64' },
         ]
-    name: windows-x64
+    name: windows-${{ matrix.arch }}
     runs-on: windows-latest
     steps:
       - name: Checkout bgfx
@@ -76,9 +76,9 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: release, binsuffix: Release },
+          { config: release, binsuffix: Release, arch: 'x64' },
         ]
-    name: linux-${{ matrix.config }}64
+    name: linux-${{ matrix.arch }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -98,31 +98,42 @@ jobs:
           repository: bkaradzic/bimg
           path: bimg
       - name: Build
+        env:
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
+          LINK_FLAGS: -flto -Wl,--gc-sections -s
         run: |
           sudo apt install libgl-dev
           cd bgfx
-          make -j$(nproc) shaderc
+          make -j$(nproc) shaderc \
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+      - name: Rename binary
+        run: |
+          mkdir -p dist
+          cp ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
+          chmod +x dist/shaderc
+          file dist/shaderc
+          ls -lh dist/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-linux-x64
-          path: ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+          path: dist/shaderc
       - name: Zip binary
-        run: zip -j shaderc-linux-x64.zip ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }}
+        run: zip -j shaderc-linux-x64.zip dist/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
           files: shaderc-linux-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
-  osx:
+  macos:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { config: release, binsuffix: Release },
+          { config: release, binsuffix: Release, arch: 'x64' },
         ]
-    name: osx-x64-${{ matrix.config }}
+    name: macos-${{ matrix.arch }}
     runs-on: macos-latest
     steps:
       - name: Checkout bgfx
@@ -142,20 +153,32 @@ jobs:
           repository: bkaradzic/bimg
           path: bimg
       - name: Build
+        env:
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
+          LINK_FLAGS: -flto -Wl,-dead_strip
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) shaderc
+          make -j$(sysctl -n hw.physicalcpu) shaderc \
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+      - name: Rename and strip binary
+        run: |
+          mkdir -p dist
+          cp ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
+          strip -x dist/shaderc
+          chmod +x dist/shaderc
+          file dist/shaderc
+          ls -lh dist/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shaderc-osx-x64
-          path: ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
+          name: shaderc-macos-x64
+          path: dist/shaderc
       - name: Zip binary
-        run: zip -j shaderc-osx-x64.zip ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }}
+        run: zip -j shaderc-macos-x64.zip dist/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
-          files: shaderc-osx-x64.zip
+          files: shaderc-macos-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
   android:
