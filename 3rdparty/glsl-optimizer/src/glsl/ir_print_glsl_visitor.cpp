@@ -308,7 +308,8 @@ void ir_print_glsl_visitor::indent(void)
 		return;
 	previous_skipped = false;
 	for (int i = 0; i < indentation; i++)
-		buffer.asprintf_append ("  ");
+		// buffer.asprintf_append ("  ");
+		buffer.asprintf_append ("");
 }
 
 void ir_print_glsl_visitor::end_statement_line()
@@ -324,7 +325,8 @@ void ir_print_glsl_visitor::newline_indent()
 	if (expression_depth % 4 == 0)
 	{
 		++indentation;
-		buffer.asprintf_append ("\n");
+		// buffer.asprintf_append ("\n");
+		buffer.asprintf_append ("");
 		indent();
 	}
 }
@@ -333,7 +335,8 @@ void ir_print_glsl_visitor::newline_deindent()
 	if (expression_depth % 4 == 0)
 	{
 		--indentation;
-		buffer.asprintf_append ("\n");
+		// buffer.asprintf_append ("\n");
+		buffer.asprintf_append ("");
 		indent();
 	}
 }
@@ -352,6 +355,7 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
         if (v->data.mode == ir_var_temporary)
             buffer.asprintf_append ("_%d",  (int)id);
         else
+            // buffer.asprintf_append ("%s_%d", v->name, (int)id);
             buffer.asprintf_append ("_r%d", (int)id);
     }
 	else
