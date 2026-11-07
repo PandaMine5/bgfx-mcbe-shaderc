@@ -16,7 +16,7 @@ jobs:
 #       fail-fast: true
 #       matrix:
 #         include: [
-#           { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
+          # { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
 # #         { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
 #         ]
 #     name: windows-x64
@@ -209,33 +209,45 @@ jobs:
           path: bx
           fetch-depth: 0
       - run: cd bx && git checkout 198cd12 || cd ..
-      - name: Checkout bimg
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bimg
-          path: bimg
+      # - name: Checkout bimg
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: bkaradzic/bimg
+      #     path: bimg
       - name: Build
         run: |
           sudo apt-get update
           sudo apt-get install -y libgl-dev zip
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
+          
           cd bgfx
+
           make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release 
+          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
+            CXXFLAGS="-O3 -flto=thin -fdata-sections -ffunction-sections -fvisibility=hidden" \
+            LDFLAGS="-flto=thin -Wl,--gc-sections -Wl,--as-needed -s"
         env:
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Check
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
+      - name: Prepare binary
+        run: |
+          mkdir -p out
+          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease out/shaderc
+          chmod +x out/shaderc
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-android-${{ matrix.platform }}
-          path: ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
+          path: out/shaderc
+
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
+        run: zip -j shaderc-android-${{ matrix.platform }}.zip out/shaderc
+
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
