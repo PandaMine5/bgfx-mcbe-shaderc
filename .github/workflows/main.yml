@@ -64,7 +64,7 @@ jobs:
           name: shaderc-win-x64
           path: dist/shaderc.exe
       - name: Zip binary
-        run: Compress-Archive -Path ./dist/shaderc.exe -Destination shaderc-win-x64.zip
+        run: Compress-Archive -Path ./dist/shaderc.exe -Destination shaderc-win-x64.zip -CompressionLevel Optimal
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
@@ -119,7 +119,7 @@ jobs:
           name: shaderc-linux-x64
           path: dist/shaderc
       - name: Zip binary
-        run: zip -j shaderc-linux-x64.zip dist/shaderc
+        run: zip -9 -j shaderc-linux-x64.zip dist/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
@@ -174,7 +174,7 @@ jobs:
           name: shaderc-macos-x64
           path: dist/shaderc
       - name: Zip binary
-        run: zip -j shaderc-macos-x64.zip dist/shaderc
+        run: zip -9 -j shaderc-macos-x64.zip dist/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
@@ -220,20 +220,33 @@ jobs:
           ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
           cd bgfx
           make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release
+          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
         env:
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          OPT_FLAGS: -O3 -ffunction-sections -fdata-sections
+          LINK_FLAGS: -Wl,--gc-sections
       - name: Check
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
+      - name: Rename and strip binary
+        run: |
+          mkdir -p dist
+          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease dist/shaderc
+          $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --strip-all dist/shaderc
+          chmod +x dist/shaderc
+          file dist/shaderc
+          ls -lh dist/
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shaderc-android-${{ matrix.platform }}
-          path: ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
+          path: dist/shaderc
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease
+        run: zip -9 -j shaderc-android-${{ matrix.platform }}.zip dist/shaderc
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
