@@ -233,7 +233,7 @@ jobs:
       - name: Rename and strip binary
         run: |
           mkdir -p dist
-          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/shadercRelease dist/shaderc
+          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease dist/shaderc
           $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --strip-all dist/shaderc
           chmod +x dist/shaderc
           file dist/shaderc
