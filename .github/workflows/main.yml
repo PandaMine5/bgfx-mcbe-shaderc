@@ -8,7 +8,6 @@ permissions:
   contents: write
   
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -20,7 +19,7 @@ jobs:
           { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
 #         { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
         ]
-    name: mingw-${{ matrix.msystem }}
+    name: windows-x64
     runs-on: windows-latest
     steps:
       - name: Checkout bgfx
@@ -64,14 +63,15 @@ jobs:
           files: shaderc-win-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
-  linux:
+
+ linux:
     strategy:
       fail-fast: true
       matrix:
         include: [
           { config: release, binsuffix: Release },
         ]
-    name: linux-${{ matrix.config }}64
+    name: linux-x64
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -108,14 +108,15 @@ jobs:
           files: shaderc-linux-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
-  macos:
+
+  osx:
     strategy:
       fail-fast: true
       matrix:
         include: [
           { config: release, binsuffix: Release },
         ]
-    name: osx-x64-${{ matrix.config }}
+    name: macos-x64
     runs-on: macos-latest
     steps:
       - name: Checkout bgfx
@@ -148,9 +149,10 @@ jobs:
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
-          files: shaderc-macos-x64.zip
+          files: shaderc-osx-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
+
   android:
     strategy:
       fail-fast: true
@@ -159,7 +161,7 @@ jobs:
           { platform: arm, label: arm32 },
           { platform: arm64, label: arm64 },
         ]
-    name: android-${{ matrix.platform }}
+    name: android-${{ matrix.label }}
     runs-on: ubuntu-22.04
     steps:
       - uses: nttld/setup-ndk@v1
@@ -202,10 +204,10 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shaderc-android-${{ matrix.platform }}
+          name: shaderc-android-${{ matrix.label }}
           path: ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease
       - name: Zip binary
-        run: zip -j shaderc-android-${{ matrix.platform }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease
+        run: zip -j shaderc-android-${{ matrix.label }}.zip ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease
       - name: Publish binary
         uses: softprops/action-gh-release@v2
         with:
