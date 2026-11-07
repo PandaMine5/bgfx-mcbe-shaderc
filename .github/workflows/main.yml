@@ -88,7 +88,7 @@ jobs:
         with:
           repository: bkaradzic/bx
           path: bx
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Checkout pinned bx revision
         if: steps.shaderc-cache.outputs.cache-hit != 'true'
