@@ -375,8 +375,12 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
 	std::string minified = minifyGLSL(std::string(str.c_str()));
-	
-	return ralloc_strdup(buffer, minified.c_str());
+
+	if (cmdLine.hasArg("minify")) {
+		return ralloc_strdup(buffer, minified.c_str());
+	} else {
+		return ralloc_strdup(buffer, str.c_str());
+	}
 }
 
 
