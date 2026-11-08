@@ -369,6 +369,7 @@ namespace bgfx
 		, keepIntermediate(false)
 		, optimize(false)
 		, optimizationLevel(3)
+		, minify(false)
 	{
 	}
 
@@ -2724,6 +2725,7 @@ namespace bgfx
 			options.backwardsCompatibility = cmdLine.hasArg('\0', "backwards-compatibility");
 			options.warningsAreErrors      = cmdLine.hasArg('\0', "Werror");
 			options.keepIntermediate       = cmdLine.hasArg('\0', "keep-intermediate");
+			options.minify                 = cmdLine.hasArg('\0', "minify");
 
 			uint32_t optimization = 3;
 			if (cmdLine.hasArg(optimization, 'O') )
