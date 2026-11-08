@@ -287,19 +287,11 @@ static std::string minifyGLSL(const std::string& source)
     return out;
 }
 
-bool minify = false;
-
-for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], "--minify") == 0) {
-        minify = true;
-    }
-}
-
 
 char*
 _mesa_print_ir_glsl(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
-		char* buffer, PrintGlslMode mode, bool minify)
+		char* buffer, PrintGlslMode mode)
 {
 	string_buffer str(buffer);
 	string_buffer body(buffer);
@@ -384,11 +376,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	str.asprintf_append("%s", body.c_str());
 	std::string minified = minifyGLSL(std::string(str.c_str()));
 
-	if (minify) {
-		return ralloc_strdup(buffer, minified.c_str());
-	} else {
-		return ralloc_strdup(buffer, str.c_str());
-	}
+	return ralloc_strdup(buffer, minified.c_str());
 }
 
 
