@@ -110,6 +110,8 @@ namespace bgfx
 
 		bool optimize;
 		uint32_t optimizationLevel;
+
+		bool minify;
 	};
 
 	typedef std::vector<Uniform> UniformArray;
