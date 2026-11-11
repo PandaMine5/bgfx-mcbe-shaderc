@@ -28,6 +28,7 @@
 #include "ir_unused_structs.h"
 #include "loop_analysis.h"
 #include "program/hash_table.h"
+#include <string>
 #include <math.h>
 
 
@@ -393,9 +394,9 @@ _mesa_print_ir_metal(exec_list *instructions,
 
 	*outUniformsSize = ctx.uniformLocationCounter;
 	
-	std::string minifiedMSL = minifyGLSL(std::string(ctx.prefixStr.c_str()));
+	std::string minified = minifyMSL(std::string(ctx.prefixStr.c_str()));
 
-	return ralloc_strdup(buffer, minifiedMSL.c_str());
+	return ralloc_strdup(buffer, minified.c_str());
 }
 
 
