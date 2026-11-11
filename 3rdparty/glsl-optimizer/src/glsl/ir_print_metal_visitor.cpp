@@ -202,6 +202,55 @@ public:
 };
 
 
+static std::string minifyMSL(const std::string& source)
+{
+    static const std::regex comments(R"(/\*[\s\S]*?\*/|//[^\r\n]*)");
+    static const std::regex leadingZero(R"((^|[^\w.])0(?=\.\d))"); // 0.9 -> .9
+    static const std::regex carriageReturn(R"(\r)");
+    static const std::regex whitespace(R"(\s+)");
+    static const std::regex plusMinus(R"(([+\-])\s+(?=[+\-]))");
+    static const std::regex operators(R"(\s*([+\-*/%&|^<>!]?=)\s*)");
+    static const std::regex braces(R"(\s*([{};])\s*)");
+    static const std::regex trim(R"(^\s+|\s+$)");
+    static const std::regex directiveSplit(R"(([^\n])#)"); // Put #include <metal_stdlib> - above all code
+
+    std::string s = std::regex_replace(source, carriageReturn, "");
+    s = std::regex_replace(s, comments, " ");
+    s = std::regex_replace(s, leadingZero, "$1");
+
+    std::string out, chunk, line;
+    std::istringstream lines(s);
+
+    auto flush = [&]() {
+        if (chunk.empty()) return;
+        chunk = std::regex_replace(chunk, whitespace, " ");
+        chunk = std::regex_replace(chunk, plusMinus, "$1 ");
+        chunk = std::regex_replace(chunk, operators, "$1");
+        chunk = std::regex_replace(chunk, braces, "$1");
+        out += std::regex_replace(chunk, trim, "");
+        chunk.clear();
+    };
+
+    while (std::getline(lines, line))
+    {
+        auto first = line.find_first_not_of(" \t");
+
+        if (first != std::string::npos && line[first] == '#')
+        {
+            flush();
+            out += line + '\n';
+        }
+        else
+        {
+            chunk += line + ' ';
+        }
+    }
+
+    flush();
+    return std::regex_replace(out, directiveSplit, "$1\n#");
+}
+
+
 char*
 _mesa_print_ir_metal(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
@@ -343,8 +392,10 @@ _mesa_print_ir_metal(exec_list *instructions,
 	ctx.prefixStr.asprintf_append("%s", ctx.str.c_str());
 
 	*outUniformsSize = ctx.uniformLocationCounter;
+	
+	std::string minifiedMSL = minifyGLSL(std::string(ctx.prefixStr.c_str()));
 
-	return ralloc_strdup(buffer, ctx.prefixStr.c_str());
+	return ralloc_strdup(buffer, minifiedMSL.c_str());
 }
 
 
