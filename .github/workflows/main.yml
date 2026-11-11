@@ -52,7 +52,7 @@ jobs:
         run: |
           cd bgfx
           make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX config=debug64
-# CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
       - name: Rename binary
         shell: msys2 {0}
         run: |
@@ -154,8 +154,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-strict-aliasing -mmacosx-version-min=11.0
-          LINK_FLAGS: -flto -Wl,-dead_strip -mmacosx-version-min=11.0
+          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
+          LINK_FLAGS: -flto -Wl,-dead_strip
         run: |
           cd bgfx
           make -j$(sysctl -n hw.physicalcpu) shaderc \
