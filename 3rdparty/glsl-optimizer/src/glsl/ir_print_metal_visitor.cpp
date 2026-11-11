@@ -28,6 +28,7 @@
 #include "ir_unused_structs.h"
 #include "loop_analysis.h"
 #include "program/hash_table.h"
+#include <sstream>
 #include <string>
 #include <regex>
 #include <math.h>
