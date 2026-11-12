@@ -47,11 +47,11 @@ jobs:
       - name: Build
         shell: msys2 {0}
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-ident -fno-strict-aliasing
-          LINK_FLAGS: -flto -Wl,--gc-sections -static -s
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
+          LINK_FLAGS: -O2 -flto=thin
         run: |
           cd bgfx
-          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX config=debug64
+          make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX config=release
             CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
       - name: Rename binary
         shell: msys2 {0}
@@ -71,6 +71,7 @@ jobs:
           files: shaderc-win-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
+
   linux:
     strategy:
       fail-fast: true
@@ -99,8 +100,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections -fno-ident -fno-strict-aliasing
-          LINK_FLAGS: -flto -Wl,--gc-sections -static-libstdc++ -static-libgcc -s
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
+          LINK_FLAGS: -O2 -flto=thin
         run: |
           sudo apt install libgl-dev
           cd bgfx
@@ -154,8 +155,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -flto -ffunction-sections -fdata-sections
-          LINK_FLAGS: -flto -Wl,-dead_strip
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
+          LINK_FLAGS: -O2 -flto=thin
         run: |
           cd bgfx
           make -j$(sysctl -n hw.physicalcpu) shaderc \
@@ -181,6 +182,7 @@ jobs:
           files: shaderc-macos-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
+
   android:
     strategy:
       fail-fast: true
@@ -215,8 +217,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O3 -ffunction-sections -fdata-sections -fno-strict-aliasing
-          LINK_FLAGS: -Wl,--gc-sections -Wl,--icf=all
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
+          LINK_FLAGS: -O2 -flto=thin
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           sudo apt install libgl-dev
