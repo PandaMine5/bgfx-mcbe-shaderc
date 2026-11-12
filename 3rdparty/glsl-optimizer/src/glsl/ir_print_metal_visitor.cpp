@@ -205,31 +205,29 @@ public:
 };
 
 
-static std::string minifyMSL(const std::string& source)
+static std::string minifyMetal(const std::string& source)
 {
     static const std::regex comments(R"(/\*[\s\S]*?\*/|//[^\r\n]*)");
-    static const std::regex leadingZero(R"((^|[^\w.])0(?=\.\d))"); // 0.9 -> .9
     static const std::regex carriageReturn(R"(\r)");
-    static const std::regex whitespace(R"(\s+)");
+    static const std::regex leadingZero(R"((^|[^\w.])0(?=\.\d))");   // 0.9 -> .9
+    static const std::regex trailingZero(R"((\.\d*[1-9])0+(?!\d))"); // 1.20000 -> 1.2
     static const std::regex plusMinus(R"(([+\-])\s+(?=[+\-]))");
-    static const std::regex operators(R"(\s*([+\-*/%&|^<>!]?=)\s*)");
-    static const std::regex braces(R"(\s*([{};])\s*)");
+    static const std::regex operators(R"(\s*([(){}<>=+\-*/|&?:;,!%^])\s*)");
     static const std::regex trim(R"(^\s+|\s+$)");
-    static const std::regex directiveSplit(R"(([^\n])#)"); // Put #include <metal_stdlib> - above all code
+    static const std::regex directiveSplit(R"(([^\n])#)"); // Put #include <metal_stdlib> above all code
 
     std::string s = std::regex_replace(source, carriageReturn, "");
     s = std::regex_replace(s, comments, " ");
     s = std::regex_replace(s, leadingZero, "$1");
+    s = std::regex_replace(s, trailingZero, "$1");
 
     std::string out, chunk, line;
     std::istringstream lines(s);
 
     auto flush = [&]() {
         if (chunk.empty()) return;
-        chunk = std::regex_replace(chunk, whitespace, " ");
         chunk = std::regex_replace(chunk, plusMinus, "$1 ");
         chunk = std::regex_replace(chunk, operators, "$1");
-        chunk = std::regex_replace(chunk, braces, "$1");
         out += std::regex_replace(chunk, trim, "");
         chunk.clear();
     };
@@ -252,7 +250,6 @@ static std::string minifyMSL(const std::string& source)
     flush();
     return std::regex_replace(out, directiveSplit, "$1\n#");
 }
-
 
 char*
 _mesa_print_ir_metal(exec_list *instructions,
@@ -396,7 +393,7 @@ _mesa_print_ir_metal(exec_list *instructions,
 
 	*outUniformsSize = ctx.uniformLocationCounter;
 	
-	std::string minified = minifyMSL(std::string(ctx.prefixStr.c_str()));
+	std::string minified = minifyMetal(std::string(ctx.prefixStr.c_str()));
 
 	return ralloc_strdup(buffer, minified.c_str());
 }
@@ -408,7 +405,7 @@ void ir_print_metal_visitor::indent(void)
 		return;
 	previous_skipped = false;
 	for (int i = 0; i < indentation; i++)
-		buffer.asprintf_append ("  ");
+		buffer.asprintf_append ("");
 }
 
 void ir_print_metal_visitor::end_statement_line()
@@ -452,7 +449,8 @@ void ir_print_metal_visitor::print_var_name (ir_variable* v)
         if (v->data.mode == ir_var_temporary)
             buffer.asprintf_append ("_%d", (int)id);
         else
-            buffer.asprintf_append ("_%s_%d", v->name, (int)id);
+            // buffer.asprintf_append ("_%s_%d", v->name, (int)id);
+            buffer.asprintf_append ("_r%d", (int)id);
     }
 	else
 	{
