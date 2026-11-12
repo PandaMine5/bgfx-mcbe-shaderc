@@ -209,12 +209,12 @@ static std::string minifyMetal(const std::string& source)
 {
     static const std::regex comments(R"(/\*[\s\S]*?\*/|//[^\r\n]*)");
     static const std::regex carriageReturn(R"(\r)");
-    static const std::regex leadingZero(R"((^|[^\w.])0(?=\.\d))");   // 0.9 -> .9
-    static const std::regex trailingZero(R"((\.\d*[1-9])0+(?!\d))"); // 1.20000 -> 1.2
+    static const std::regex leadingZero(R"((^|[^\w.])0(?=\.\d))");
+    static const std::regex trailingZero(R"((\.\d*[1-9])0+(?!\d))");
     static const std::regex plusMinus(R"(([+\-])\s+(?=[+\-]))");
-    static const std::regex operators(R"(\s*([(){}<>=+\-*/|&?:;,!%^])\s*)");
+    static const std::regex operators(R"(\s*([(){}<>=+\-*/|&?:;,!%^\[\].])\s*)");
     static const std::regex trim(R"(^\s+|\s+$)");
-    static const std::regex directiveSplit(R"(([^\n])#)"); // Put #include <metal_stdlib> above all code
+    static const std::regex multiSpace(R"(\s{2,})");
 
     std::string s = std::regex_replace(source, carriageReturn, "");
     s = std::regex_replace(s, comments, " ");
@@ -228,6 +228,7 @@ static std::string minifyMetal(const std::string& source)
         if (chunk.empty()) return;
         chunk = std::regex_replace(chunk, plusMinus, "$1 ");
         chunk = std::regex_replace(chunk, operators, "$1");
+        chunk = std::regex_replace(chunk, multiSpace, " ");
         out += std::regex_replace(chunk, trim, "");
         chunk.clear();
     };
@@ -235,20 +236,19 @@ static std::string minifyMetal(const std::string& source)
     while (std::getline(lines, line))
     {
         auto first = line.find_first_not_of(" \t");
-
         if (first != std::string::npos && line[first] == '#')
         {
             flush();
-            out += line + '\n';
+            out += line.substr(first) + '\n';
         }
         else
         {
             chunk += line + ' ';
         }
     }
-
     flush();
-    return std::regex_replace(out, directiveSplit, "$1\n#");
+
+    return out;
 }
 
 char*
