@@ -72,187 +72,187 @@ jobs:
           tag_name: Shaderc
           fail_on_unmatched_files: true
 
-  linux:
-    strategy:
-      fail-fast: true
-      matrix:
-        include: [
-          { config: release, binsuffix: Release, arch: 'x64' },
-        ]
-    name: linux-${{ matrix.arch }}
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout bgfx
-        uses: actions/checkout@v4
-        with:
-          path: bgfx
-      - name: Checkout bx
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bx
-          path: bx
-          fetch-depth: 0
-      - run: cd bx && git checkout 198cd12 || cd ..
-      - name: Checkout bimg
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bimg
-          path: bimg
-      - name: Build
-        env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
-          LINK_FLAGS: -O2
-        run: |
-          sudo apt install libgl-dev
-          cd bgfx
-          make -j$(nproc) shaderc \
-            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
-      - name: Rename binary
-        run: |
-          mkdir -p dist
-          cp ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
-          chmod +x dist/shaderc
-          file dist/shaderc
-          ls -lh dist/
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: shaderc-linux-x64
-          path: dist/shaderc
-      - name: Zip binary
-        run: zip -9 -j shaderc-linux-x64.zip dist/shaderc
-      - name: Publish binary
-        uses: softprops/action-gh-release@v2
-        with:
-          files: shaderc-linux-x64.zip
-          tag_name: Shaderc
-          fail_on_unmatched_files: true
+  # linux:
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       include: [
+  #         { config: release, binsuffix: Release, arch: 'x64' },
+  #       ]
+  #   name: linux-${{ matrix.arch }}
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout bgfx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: bgfx
+  #     - name: Checkout bx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bx
+  #         path: bx
+  #         fetch-depth: 0
+  #     - run: cd bx && git checkout 198cd12 || cd ..
+  #     - name: Checkout bimg
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bimg
+  #         path: bimg
+  #     - name: Build
+  #       env:
+  #         OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+  #         LINK_FLAGS: -O2
+  #       run: |
+  #         sudo apt install libgl-dev
+  #         cd bgfx
+  #         make -j$(nproc) shaderc \
+  #           CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+  #     - name: Rename binary
+  #       run: |
+  #         mkdir -p dist
+  #         cp ./bgfx/.build/linux64_gcc/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
+  #         chmod +x dist/shaderc
+  #         file dist/shaderc
+  #         ls -lh dist/
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: shaderc-linux-x64
+  #         path: dist/shaderc
+  #     - name: Zip binary
+  #       run: zip -9 -j shaderc-linux-x64.zip dist/shaderc
+  #     - name: Publish binary
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         files: shaderc-linux-x64.zip
+  #         tag_name: Shaderc
+  #         fail_on_unmatched_files: true
 
-  macos:
-    strategy:
-      fail-fast: true
-      matrix:
-        include: [
-          { config: release, binsuffix: Release, arch: 'x64' },
-        ]
-    name: macos-${{ matrix.arch }}
-    runs-on: macos-latest
-    steps:
-      - name: Checkout bgfx
-        uses: actions/checkout@v4
-        with:
-          path: bgfx
-      - name: Checkout bx
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bx
-          path: bx
-          fetch-depth: 0
-      - run: cd bx && git checkout 198cd12 || cd ..
-      - name: Checkout bimg
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bimg
-          path: bimg
-      - name: Build
-        env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
-          LINK_FLAGS: -O2
-        run: |
-          cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) shaderc \
-            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
-      - name: Rename and strip binary
-        run: |
-          mkdir -p dist
-          cp ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
-          strip -x dist/shaderc
-          chmod +x dist/shaderc
-          file dist/shaderc
-          ls -lh dist/
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: shaderc-macos-x64
-          path: dist/shaderc
-      - name: Zip binary
-        run: zip -9 -j shaderc-macos-x64.zip dist/shaderc
-      - name: Publish binary
-        uses: softprops/action-gh-release@v2
-        with:
-          files: shaderc-macos-x64.zip
-          tag_name: Shaderc
-          fail_on_unmatched_files: true
+  # macos:
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       include: [
+  #         { config: release, binsuffix: Release, arch: 'x64' },
+  #       ]
+  #   name: macos-${{ matrix.arch }}
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout bgfx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: bgfx
+  #     - name: Checkout bx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bx
+  #         path: bx
+  #         fetch-depth: 0
+  #     - run: cd bx && git checkout 198cd12 || cd ..
+  #     - name: Checkout bimg
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bimg
+  #         path: bimg
+  #     - name: Build
+  #       env:
+  #         OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+  #         LINK_FLAGS: -O2
+  #       run: |
+  #         cd bgfx
+  #         make -j$(sysctl -n hw.physicalcpu) shaderc \
+  #           CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+  #     - name: Rename and strip binary
+  #       run: |
+  #         mkdir -p dist
+  #         cp ./bgfx/.build/osx-x64/bin/shaderc${{ matrix.binsuffix }} dist/shaderc
+  #         strip -x dist/shaderc
+  #         chmod +x dist/shaderc
+  #         file dist/shaderc
+  #         ls -lh dist/
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: shaderc-macos-x64
+  #         path: dist/shaderc
+  #     - name: Zip binary
+  #       run: zip -9 -j shaderc-macos-x64.zip dist/shaderc
+  #     - name: Publish binary
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         files: shaderc-macos-x64.zip
+  #         tag_name: Shaderc
+  #         fail_on_unmatched_files: true
 
-  android:
-    strategy:
-      fail-fast: true
-      matrix:
-        include: [
-          { platform: arm },
-          { platform: arm64 },
-        ]
-    name: android-${{ matrix.platform }}
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r25c
-          add-to-path: false
-      - name: Checkout bgfx
-        uses: actions/checkout@v4
-        with:
-          path: bgfx
-      - name: Checkout bx
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bx
-          path: bx
-          fetch-depth: 0
-      - run: cd bx && git checkout 198cd12 || cd ..
-      - name: Checkout bimg
-        uses: actions/checkout@v4
-        with:
-          repository: bkaradzic/bimg
-          path: bimg
-      - name: Build
-        env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
-          LINK_FLAGS: -O2
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: |
-          sudo apt install libgl-dev
-          ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
-          ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
-          cd bgfx
-          make .build/projects/gmake-android-${{ matrix.platform }}
-          make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
-            CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
-      - name: Check
-        run: |
-          cd bgfx
-          ls -lash ".build/android-${{ matrix.platform }}/bin"
-      - name: Rename and strip binary
-        run: |
-          mkdir -p dist
-          cp ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease dist/shaderc
-          $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --strip-all dist/shaderc
-          chmod +x dist/shaderc
-          file dist/shaderc
-          ls -lh dist/
-        env:
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: shaderc-android-${{ matrix.platform }}
-          path: dist/shaderc
-      - name: Zip binary
-        run: zip -9 -j shaderc-android-${{ matrix.platform }}.zip dist/shaderc
-      - name: Publish binary
-        uses: softprops/action-gh-release@v2
-        with:
-          files: shaderc-android-${{ matrix.platform }}.zip
-          tag_name: Shaderc
-          fail_on_unmatched_files: true
+  # android:
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       include: [
+  #         { platform: arm },
+  #         { platform: arm64 },
+  #       ]
+  #   name: android-${{ matrix.platform }}
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - uses: nttld/setup-ndk@v1
+  #       id: setup-ndk
+  #       with:
+  #         ndk-version: r25c
+  #         add-to-path: false
+  #     - name: Checkout bgfx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: bgfx
+  #     - name: Checkout bx
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bx
+  #         path: bx
+  #         fetch-depth: 0
+  #     - run: cd bx && git checkout 198cd12 || cd ..
+  #     - name: Checkout bimg
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: bkaradzic/bimg
+  #         path: bimg
+  #     - name: Build
+  #       env:
+  #         OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+  #         LINK_FLAGS: -O2
+  #         ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+  #       run: |
+  #         sudo apt install libgl-dev
+  #         ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libpthread.a
+  #         ar -cr $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libpthread.a
+  #         cd bgfx
+  #         make .build/projects/gmake-android-${{ matrix.platform }}
+  #         make -j$(nproc) -R -C .build/projects/gmake-android-${{ matrix.platform }} shaderc config=release \
+  #           CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS" LDFLAGS="$LINK_FLAGS"
+  #     - name: Check
+  #       run: |
+  #         cd bgfx
+  #         ls -lash ".build/android-${{ matrix.platform }}/bin"
+  #     - name: Rename and strip binary
+  #       run: |
+  #         mkdir -p dist
+  #         cp ./bgfx/.build/android-${{ matrix.platform }}/bin/libshadercRelease dist/shaderc
+  #         $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --strip-all dist/shaderc
+  #         chmod +x dist/shaderc
+  #         file dist/shaderc
+  #         ls -lh dist/
+  #       env:
+  #         ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: shaderc-android-${{ matrix.platform }}
+  #         path: dist/shaderc
+  #     - name: Zip binary
+  #       run: zip -9 -j shaderc-android-${{ matrix.platform }}.zip dist/shaderc
+  #     - name: Publish binary
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         files: shaderc-android-${{ matrix.platform }}.zip
+  #         tag_name: Shaderc
+  #         fail_on_unmatched_files: true
