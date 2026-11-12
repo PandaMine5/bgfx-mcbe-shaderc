@@ -47,8 +47,8 @@ jobs:
       - name: Build
         shell: msys2 {0}
         env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
-          LINK_FLAGS: -O2 -flto=thin
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+          LINK_FLAGS: -O2
         run: |
           cd bgfx
           make shaderc -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX config=release
@@ -100,8 +100,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
-          LINK_FLAGS: -O2 -flto=thin
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+          LINK_FLAGS: -O2
         run: |
           sudo apt install libgl-dev
           cd bgfx
@@ -127,6 +127,7 @@ jobs:
           files: shaderc-linux-x64.zip
           tag_name: Shaderc
           fail_on_unmatched_files: true
+
   macos:
     strategy:
       fail-fast: true
@@ -155,8 +156,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
-          LINK_FLAGS: -O2 -flto=thin
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+          LINK_FLAGS: -O2
         run: |
           cd bgfx
           make -j$(sysctl -n hw.physicalcpu) shaderc \
@@ -217,8 +218,8 @@ jobs:
           path: bimg
       - name: Build
         env:
-          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -flto=thin
-          LINK_FLAGS: -O2 -flto=thin
+          OPT_FLAGS: -O2 -DNDEBUG -g0 -ffunction-sections -fdata-sections -fvisibility=hidden
+          LINK_FLAGS: -O2
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           sudo apt install libgl-dev
